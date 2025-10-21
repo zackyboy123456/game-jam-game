@@ -1,0 +1,247 @@
+import pygame
+import random
+import button
+
+
+
+pygame.init()
+pygame.mixer.init()
+
+Screen_w = 1200
+Screen_h = 1200
+
+screen = pygame.display.set_mode((Screen_w,Screen_h))
+s ='sound'
+start_over = pygame.image.load('start over.png').convert_alpha()
+Quit = pygame.image.load('Quit.png').convert_alpha()
+start = pygame.image.load('start.png').convert_alpha()
+ouch = pygame.mixer.Sound('C:/Users/zack/PycharmProjects/pythonProject6\hurt.ogg')
+pygame.mixer.music.load('C:/Users/zack/Desktop/audio/Undertale + Deltarune Full OST/Stronger Monsters.mp3')
+
+
+level = 3
+
+
+
+lvl_prog = 0
+
+screendim = pygame.Rect(0,0,Screen_w,Screen_h-100)
+
+player = pygame.Rect((200,300 ,50,50))
+pygame.mixer.music.set_volume(.1)
+pygame.mixer.music.play(-1,0.0)
+
+
+bullets = []
+phasecount = 1
+speed = (level + phasecount)/level
+def add_bullet(ways):
+
+        for i in  range(level) :
+                num = random.randint(0,10)
+                if num == 1:
+                    healing = True
+                else:
+                    healing = False
+
+                if ways == 0:
+                        bullet_thing = pygame.Rect((random.randint(0, 1200),0, 25, 25))
+                if ways == 1:
+                        bullet_thing = pygame.Rect((random.randint(0, 1200),1100, 25, 25))
+                if ways == 2:
+                        bullet_thing = pygame.Rect((0,random.randint(0, 1100), 25, 25))
+                if ways == 3:
+                        bullet_thing = pygame.Rect((1100,random.randint(0, 1100), 25, 25))
+                print(healing)
+                bulletw = bullet(ways,bullet_thing,healing)
+
+                bullets.append(bulletw)
+class bullet:
+
+    def __init__ (self,ways,bulletse,healing):
+        self.ways = ways
+        self.bulletse = bulletse
+        self.healing = healing
+
+
+
+    def move_bullets(self):
+        if self.ways == 0:
+            self.bulletse.move_ip(0, speed)
+        if self.ways == 1:
+            self.bulletse.move_ip(0, -speed)
+        if self.ways == 2:
+            self.bulletse.move_ip(speed, 0)
+        if self.ways == 3:
+            self.bulletse.move_ip(-speed, 0)
+
+
+
+
+text_font = pygame.font.SysFont("Sans Serif", 50)
+text_font2 = pygame.font.SysFont("Sans Serif", 100)
+
+
+
+def draw_text(txt,font,text_col,x,y):
+    img = font.render(txt,True, text_col)
+    screen.blit(img,(x,y))
+
+invincableframe = 0
+invincable = False
+invincabletime = 0
+
+health = 10
+
+score = 0
+
+endbutt = button.Button(Screen_w/3,Screen_h/4,Quit,1)
+startbutt = button.Button((Screen_w*2)/3,Screen_h/4,start_over,1)
+newstartbutt = button.Button((Screen_w*2)/3,Screen_h/4,start,1)
+title = True
+while title:
+    screen.fill((0, 0, 0))
+    draw_text("GAMER GUNNER",text_font,"RED",300,100)
+    if newstartbutt.draw(screen):
+        run = True
+        title = False
+    if endbutt.draw(screen):
+        title = False
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            title = False
+    pygame.display.update()
+
+while run:
+
+    if pygame.time.get_ticks() - invincabletime > 1000:
+        invincable = False
+    healthtxt = "Health: " + str(health) + "/10"
+    scoretxt1 = "Phase  " + str(phasecount)
+    scoretxt2 =  "level  " + str(level)
+    screen.fill((0,0,0))
+    draw_text(scoretxt2, text_font,"White",900,100)
+    draw_text(scoretxt1, text_font, "White", 900, 50)
+    draw_text(healthtxt, text_font, "White", 500, 1150)
+    pygame.draw.line(screen,"white",(0,1100),(1200,1100))
+    col = (255,0,0)
+
+
+    for bullet_item in bullets:
+        if bullet_item.bulletse.y > 1050 or bullet_item.bulletse.y < 0 or bullet_item.bulletse.x > 1100 or bullet_item.bulletse.x < 0 :
+            score = score + 1
+            bullets.remove(bullet_item)
+
+
+        if player.colliderect(bullet_item.bulletse) and invincable == False:
+            if bullet_item.healing == False:
+                pygame.mixer.Sound.play(ouch)
+                bullets.remove(bullet_item)
+                invincable = True
+                invincabletime = pygame.time.get_ticks()
+                health -= 1
+            else:
+                pygame.mixer.Sound.play(ouch)
+                bullets.remove(bullet_item)
+                health += 1
+
+        bullet_item.move_bullets()
+
+
+    if lvl_prog >= 10000:
+        lvl_prog = 0
+        level = level + 1
+        screen.fill((0, 0, 0))
+        for i in range(3000) :
+            draw_text("GOOD JOB NEXT LEVEL", text_font2, "RED", 300, 100)
+            pygame.display.update()
+    else:
+        lvl_prog = lvl_prog +1
+
+
+
+    if invincable == True:
+        invincableframe +=1
+        if invincableframe > 10:
+            pygame.draw.rect(screen, col, player)
+            invincableframe = 0
+
+
+    if invincable == False:
+        pygame.draw.rect(screen, col, player)
+
+    for bullet_item in bullets:
+        if bullet_item.healing == False:
+            pygame.draw.rect(screen, (0,0,225), bullet_item.bulletse)
+        if bullet_item.healing == True:
+            pygame.draw.rect(screen, (124,252,0), bullet_item.bulletse)
+
+
+
+    if len(bullets) == 0:
+
+        if phasecount < 5:
+            if level == 5:
+                phasecount = phasecount + 1
+                level = 1
+        if phasecount >= 1:
+            way = random.randint(0, 3)
+            add_bullet(way)
+        if phasecount >= 2:
+            way2 = random.randint(0, 3)
+            add_bullet(way2)
+        if phasecount >= 3:
+            way3 = random.randint(0, 3)
+            add_bullet(way3)
+        if phasecount >= 4:
+            way4 = random.randint(0, 3)
+            add_bullet(way4)
+
+    if health == 0:
+        pygame.mixer.music.load('C:/Users/zack/audio/Desktop/Undertale + Deltarune Full OST/Dont Give Up.mp3')
+        pygame.mixer.music.play(-1, 0.0)
+    while health == 0:
+        screen.fill((0, 0, 0))
+        draw_text("GAME OVER", text_font, "Green", Screen_w / 2, Screen_h / 3)
+
+        if endbutt.draw(screen):
+            run = False
+            health = 30
+            print("end")
+        if startbutt.draw(screen):
+            pygame.mixer.music.load('C:/Users/zack/Desktop/Undertale + Deltarune Full OST/Stronger Monsters.mp3')
+            pygame.mixer.music.play(-1, 0.0)
+            health = 10
+            print("start")
+        pygame.display.update()
+
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+                health = 30
+        pygame.display.update()
+
+
+
+
+
+    key = pygame.key.get_pressed()
+    if key[pygame.K_a]==True:
+        player.move_ip(-1,0)
+    if key[pygame.K_d]==True:
+        player.move_ip(1,0)
+    if key[pygame.K_s]==True:
+        player.move_ip(0,1)
+    if key[pygame.K_w]==True:
+        player.move_ip(0,-1)
+
+    player.clamp_ip(screendim)
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            run =False
+    pygame.display.update()
+pygame.quit()
+
+
